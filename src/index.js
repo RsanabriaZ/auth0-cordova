@@ -76,6 +76,15 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
       return callback(err);
     }
 
+
+    if(session.isOpen){
+      session.clean();
+      setTimeout(function(){
+        callback(new Error("One session at a time")); 
+      }, 1000);
+      return;
+    }  
+
     var keys = generateProofKey();
     var client = self.client;
     var redirectUri = self.redirectUri;
@@ -90,7 +99,7 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
       code_challenge: keys.codeChallenge
     });
 
-    var url = client.buildAuthorizeUrl(params);
+    var url = client.buildAuthorizeUrl(params);    
 
     agent.open(url, function (error, result) {
       if (error != null) {
@@ -101,8 +110,7 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
       if (result.event === 'closed') {
         var handleClose = function () {
           if (session.isClosing) {
-            session.clean();
-            return callback(new Error('user canceled'));
+            return callback(result.url ? 'Opening external url' : new Error('user canceled'), result.url);
           }
         };
 

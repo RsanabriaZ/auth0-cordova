@@ -1,4 +1,6 @@
 // Fallback to old WebView where SFSafariViewController is not supported
+var openingUrl;
+
 function WebView() {
   this.tab = null;
   this.handler = null;
@@ -8,21 +10,38 @@ function WebView() {
   this.handleExit = this.handleExit.bind(this);
   this.clearEvents = this.clearEvents.bind(this);
   this.close = this.close.bind(this);
+  this.opened = false;
 }
+
 
 WebView.prototype.open = function (url, handler) {
   var browser = window.cordova.InAppBrowser;
-  var tab = browser.open(url, '_blank');
+  var tab = browser.open(url, '_blank', "location=no,toolbar=no,zoom=no,beforeload=yes");
+
+  openingUrl = null;
 
   tab.addEventListener('loadstop', this.handleFirstLoadEnd);
   tab.addEventListener('loaderror', this.handleLoadError);
   tab.addEventListener('exit', this.handleExit);
+  tab.addEventListener('loadstart', function(event){
+    if(getUrlDomain(url) !== getUrlDomain(event.url)){
+      openingUrl = event.url;
+      tab.close();
+    }
+  });
+
   this.tab = tab;
   this.handler = handler;
 };
 
+function getUrlDomain(stringUrl) {
+  var a = document.createElement('a');
+  a.href = stringUrl;
+  return a.hostname;
+}
+
 WebView.prototype.handleFirstLoadEnd = function () {
-  this.handler(null, { event: 'loaded' });
+  this.handler(null, { event: 'loaded'});
 };
 
 WebView.prototype.handleLoadError = function (e) {
@@ -30,9 +49,9 @@ WebView.prototype.handleLoadError = function (e) {
   this.handler(e, null);
 };
 
-WebView.prototype.handleExit = function () {
+WebView.prototype.handleExit = function (event) {
   this.clearEvents();
-  this.handler(null, { event: 'closed' });
+  this.handler(null, { event: 'closed', url: openingUrl  });
 };
 
 WebView.prototype.clearEvents = function () {

@@ -1,8 +1,11 @@
-function Session() {}
+function Session() {
+  isOpen: false
+}
 
 Session.clean = function () {
   Session.current = function () { return false; };
   Session.isClosing = false;
+  Session.isOpen = false;
 };
 
 Session.closing = function () {
@@ -10,6 +13,7 @@ Session.closing = function () {
 };
 
 Session.start = function (handler) {
+  Session.isOpen = true;
   Session.current(new Error('Only one instance of auth can happen at a time'));
   Session.current = handler;
 };
