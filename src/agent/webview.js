@@ -14,7 +14,7 @@ function WebView() {
 }
 
 
-WebView.prototype.open = function (url, handler) {
+WebView.prototype.open = function (url, handler, redirectURI) {
   var browser = window.cordova.InAppBrowser;
   var tab = browser.open(url, '_blank', "location=no,toolbar=no,zoom=no,beforeload=yes");
 
@@ -24,7 +24,7 @@ WebView.prototype.open = function (url, handler) {
   tab.addEventListener('loaderror', this.handleLoadError);
   tab.addEventListener('exit', this.handleExit);
   tab.addEventListener('loadstart', function(event){
-    if(getUrlDomain(url) !== getUrlDomain(event.url)){
+    if(getUrlDomain(url) !== getUrlDomain(event.url) || event.url.indexOf(redirectURI) !== -1){
       openingUrl = event.url;
       tab.close();
     }
