@@ -16,29 +16,35 @@ function WebView() {
 
 WebView.prototype.open = function (url, handler, redirectURI) {
   var browser = window.cordova.InAppBrowser;
-  var tab = browser.open(url, '_blank', "location=no,toolbar=no,zoom=no,beforeload=yes");
+  var tab = browser.open(url, '_blank', "location=no,toolbar=no,zoom=no");
 
   openingUrl = null;
 
   tab.addEventListener('loadstop', this.handleFirstLoadEnd);
   tab.addEventListener('loaderror', this.handleLoadError);
   tab.addEventListener('exit', this.handleExit);
-  tab.addEventListener('loadstart', function(event){
-    if(getUrlDomain(url) !== getUrlDomain(event.url) || event.url.indexOf(redirectURI) !== -1){
+  tab.addEventListener('loadstart', (event) => {
+    
+    const flqpAppLinks = [
+      'https://www.foodlogiq.com/privacy-policy/', 
+      'https://www.foodlogiq.com/terms-and-conditions/', 
+      'https://www.foodlogiq.com/change-url/', 
+      'https://www.foodlogiq.com/old-login/'
+    ];
+    
+
+    if(event.url.includes(redirectURI) || flqpAppLinks.indexOf(event.url) !== -1){
       openingUrl = event.url;
-      tab.close();
+      this.handler(null, { event: 'closed', url: openingUrl  });
+      this.clearEvents();
+      this.tab.close();
+
     }
   });
 
   this.tab = tab;
   this.handler = handler;
 };
-
-function getUrlDomain(stringUrl) {
-  var a = document.createElement('a');
-  a.href = stringUrl;
-  return a.hostname;
-}
 
 WebView.prototype.handleFirstLoadEnd = function () {
   this.handler(null, { event: 'loaded'});
